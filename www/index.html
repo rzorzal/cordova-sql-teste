@@ -97,7 +97,7 @@
                 selectedClientecnpj = $(this).attr('data-cnpj');
                 db.transaction(function (tx) {
                     tx.executeSql(`SELECT * FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function(ts, rs){
-                        const element = [...rs.rows][0];
+                        const element = rs.rows.item(0);
                         $('#btn-excluir').show();
                         populateModal(element);
                     });
