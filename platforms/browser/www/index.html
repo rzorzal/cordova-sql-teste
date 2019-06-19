@@ -18,7 +18,7 @@
 <body>
     <div class="app">
         <nav class="navbar navbar-light bg-primary">
-            <a style="color: white; font-weight: bold;" class="navbar-brand" href="#">Clientes</a>
+            <a style="color: white; font-weight: bold;" class="navbar-brand" href="#">Empresas</a>
         </nav>
         <div class="container-fluid" style="margin-top: 30px;">
             <div class="row">
@@ -53,12 +53,12 @@
                             <input type="text" class="form-control" id="nome">
                         </div>
                         <div class="form-group">
-                            <label for="cpf" class="col-form-label">CPF</label>
-                            <input type="text" class="form-control" id="cpf" />
+                            <label for="cnpj" class="col-form-label">cnpj</label>
+                            <input type="text" class="form-control" id="cnpj" />
                         </div>
                         <div class="form-group">
-                            <label for="idade" class="col-form-label">Idade</label>
-                            <input type="number" class="form-control" id="idade" />
+                            <label for="endereco" class="col-form-label">endereco</label>
+                            <input type="number" class="form-control" id="endereco" />
                         </div>
                         <div class="form-group">
                             <label for="email" class="col-form-label">E-mail</label>
@@ -77,13 +77,13 @@
     <script type="text/javascript" src="cordova.js"></script>
     <script>
         let db;
-        let selectedClienteCpf;
+        let selectedClientecnpj;
         document.addEventListener('deviceready', function () {
             if (window.cordova.platformId === 'browser') db = window.openDatabase('MyDatabase', '1.0', 'Data', 2*1024*1024);
             else db = window.sqlitePlugin.openDatabase({name: 'MyDatabase.db', location: 'default'});
             console.log(db);
             db.transaction(function (tx) {
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Clientes (nome, cpf, idade, email)');
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Empresas (nome, cnpj, endereco, email)');
             }, function (error) {
                 console.log('Transaction ERROR: ' + error.message);
             }, async function () {
@@ -94,9 +94,9 @@
 
         $(document).ready(function(){
             $('#collection-clientes').on('click', 'li', function(){
-                selectedClienteCpf = $(this).attr('data-cpf');
+                selectedClientecnpj = $(this).attr('data-cnpj');
                 db.transaction(function (tx) {
-                    tx.executeSql(`SELECT * FROM Clientes WHERE cpf = '${selectedClienteCpf}'`, [], function(ts, rs){
+                    tx.executeSql(`SELECT * FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function(ts, rs){
                         const element = [...rs.rows][0];
                         $('#btn-excluir').show();
                         populateModal(element);
@@ -107,20 +107,20 @@
             });
 
             $('#btn-add').on('click', function(){
-                selectedClienteCpf = undefined;
+                selectedClientecnpj = undefined;
                 $('#nome').val("");
-                $('#idade').val("");
+                $('#endereco').val("");
                 $('#email').val("");
-                $('#cpf').val("");
+                $('#cnpj').val("");
                 $('#btn-excluir').hide();
                 openModal();
             });
 
             $('#btn-excluir').on('click', function(){
                 db.transaction(function (tx) {
-                    tx.executeSql(`DELETE FROM Clientes WHERE cpf = '${selectedClienteCpf}'`, [], function(ts, rs){
+                    tx.executeSql(`DELETE FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function(ts, rs){
                         hideModal();
-                        selectedClienteCpf = undefined;
+                        selectedClientecnpj = undefined;
                         insertRows();
                     });
                 }, function (error) {
@@ -135,22 +135,22 @@
 
                     let data = {
                         nome: $('#nome').val(),
-                        idade: $('#idade').val(),
+                        endereco: $('#endereco').val(),
                         email: $('#email').val(),
-                        cpf: $('#cpf').val()
+                        cnpj: $('#cnpj').val()
                     }
 
-                    if(selectedClienteCpf){
-                        sql = `UPDATE Clientes SET nome='${data.nome}', cpf='${data.cpf}', email='${data.email}', idade=${data.idade} WHERE cpf = '${selectedClienteCpf}'`;
+                    if(selectedClientecnpj){
+                        sql = `UPDATE Empresas SET nome='${data.nome}', cnpj='${data.cnpj}', email='${data.email}', endereco=${data.endereco} WHERE cnpj = '${selectedClientecnpj}'`;
                     } else {
-                        sql = `INSERT INTO Clientes(nome, cpf, email, idade) VALUES ('${data.nome}', '${data.cpf}', '${data.email}', ${data.idade})`;
+                        sql = `INSERT INTO Empresas(nome, cnpj, email, endereco) VALUES ('${data.nome}', '${data.cnpj}', '${data.email}', ${data.endereco})`;
                     }
 
                     console.log(sql);
 
                     tx.executeSql(sql, [], function(ts, rs){
                         hideModal();
-                        selectedClienteCpf = undefined;
+                        selectedClientecnpj = undefined;
                         insertRows();
                     });
                 }, function (error) {
@@ -175,7 +175,7 @@
         function getAllClientes(){
             return new Promise( (resolve, reject) => {
                 db.transaction(function(tx){  
-                    tx.executeSql('Select * from Clientes',[], function(tr, rs){ 
+                    tx.executeSql('Select * from Empresas',[], function(tr, rs){ 
                         resolve(rs.rows);
                     });
                 })
@@ -183,7 +183,7 @@
         }
 
         async function insertRow(data){
-            $('#collection-clientes').append(`<li data-cpf="${data.cpf}" class="list-group-item" >${data.nome}</li>`)
+            $('#collection-clientes').append(`<li data-cnpj="${data.cnpj}" class="list-group-item" >${data.nome}</li>`)
         }
 
         async function insertRows(){

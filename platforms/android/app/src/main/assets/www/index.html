@@ -1,49 +1,199 @@
 <!DOCTYPE html>
-<!--
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-     KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
--->
 <html>
-    <head>
-        <!--
-        Customize this policy to fit your own app's needs. For more guidance, see:
-            https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
-        Some notes:
-            * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
-            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
-            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
-                * Enable inline JS: add 'unsafe-inline' to default-src
-        -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
-        <meta name="format-detection" content="telephone=no">
-        <meta name="msapplication-tap-highlight" content="no">
-        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
-        <link rel="stylesheet" type="text/css" href="css/index.css">
-        <title>Hello World</title>
-    </head>
-    <body>
-        <div class="app">
-            <h1>Apache Cordova</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Device is Ready</p>
+
+<head>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport"
+        content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+    <title>App dos Clientes</title>
+
+    <script src="./js/jquery.js"></script>
+    <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
+    <script src="./bootstrap/js/bootstrap.min.js"></script>
+
+</head>
+
+<body>
+    <div class="app">
+        <nav class="navbar navbar-light bg-primary">
+            <a style="color: white; font-weight: bold;" class="navbar-brand" href="#">Empresas</a>
+        </nav>
+        <div class="container-fluid" style="margin-top: 30px;">
+            <div class="row">
+                <div class="col-md-12">
+                    <ul id="collection-clientes" class="list-group">
+
+                    </ul>
+                </div>
+                <div class="col-md-12">
+                    <button id="btn-add" style="margin-top: 10px;" class="btn btn-primary btn-block">
+                        Adicionar
+                    </button>
+                </div>
             </div>
         </div>
-        <script type="text/javascript" src="cordova.js"></script>
-        <script type="text/javascript" src="js/index.js"></script>
-    </body>
+    </div>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Dados de Cliente</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="nome" class="col-form-label">Nome</label>
+                            <input type="text" class="form-control" id="nome">
+                        </div>
+                        <div class="form-group">
+                            <label for="cnpj" class="col-form-label">cnpj</label>
+                            <input type="text" class="form-control" id="cnpj" />
+                        </div>
+                        <div class="form-group">
+                            <label for="endereco" class="col-form-label">endereco</label>
+                            <input type="number" class="form-control" id="endereco" />
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="col-form-label">E-mail</label>
+                            <input type="email" class="form-control" id="email" />
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-excluir" type="button" class="btn btn-danger" data-dismiss="modal">Excluir</button>
+                    <button id="btn-salvar" type="button" class="btn btn-primary">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="cordova.js"></script>
+    <script>
+        let db;
+        let selectedClientecnpj;
+        document.addEventListener('deviceready', function () {
+            if (window.cordova.platformId === 'browser') db = window.openDatabase('MyDatabase', '1.0', 'Data', 2*1024*1024);
+            else db = window.sqlitePlugin.openDatabase({name: 'MyDatabase.db', location: 'default'});
+            console.log(db);
+            db.transaction(function (tx) {
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Empresas (nome, cnpj, endereco, email)');
+            }, function (error) {
+                console.log('Transaction ERROR: ' + error.message);
+            }, async function () {
+                console.log('Populated database OK');
+                await insertRows();
+            });
+        }, false);
+
+        $(document).ready(function(){
+            $('#collection-clientes').on('click', 'li', function(){
+                selectedClientecnpj = $(this).attr('data-cnpj');
+                db.transaction(function (tx) {
+                    tx.executeSql(`SELECT * FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function(ts, rs){
+                        const element = [...rs.rows][0];
+                        $('#btn-excluir').show();
+                        populateModal(element);
+                    });
+                }, function (error) {
+                    console.log('Transaction ERROR: ' + error.message);
+                });
+            });
+
+            $('#btn-add').on('click', function(){
+                selectedClientecnpj = undefined;
+                $('#nome').val("");
+                $('#endereco').val("");
+                $('#email').val("");
+                $('#cnpj').val("");
+                $('#btn-excluir').hide();
+                openModal();
+            });
+
+            $('#btn-excluir').on('click', function(){
+                db.transaction(function (tx) {
+                    tx.executeSql(`DELETE FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function(ts, rs){
+                        hideModal();
+                        selectedClientecnpj = undefined;
+                        insertRows();
+                    });
+                }, function (error) {
+                    console.log('Transaction ERROR: ' + error.message);
+                });
+            });
+
+            $("#btn-salvar").on('click', function(){
+                db.transaction(function (tx) {
+
+                    let sql;
+
+                    let data = {
+                        nome: $('#nome').val(),
+                        endereco: $('#endereco').val(),
+                        email: $('#email').val(),
+                        cnpj: $('#cnpj').val()
+                    }
+
+                    if(selectedClientecnpj){
+                        sql = `UPDATE Empresas SET nome='${data.nome}', cnpj='${data.cnpj}', email='${data.email}', endereco=${data.endereco} WHERE cnpj = '${selectedClientecnpj}'`;
+                    } else {
+                        sql = `INSERT INTO Empresas(nome, cnpj, email, endereco) VALUES ('${data.nome}', '${data.cnpj}', '${data.email}', ${data.endereco})`;
+                    }
+
+                    console.log(sql);
+
+                    tx.executeSql(sql, [], function(ts, rs){
+                        hideModal();
+                        selectedClientecnpj = undefined;
+                        insertRows();
+                    });
+                }, function (error) {
+                    console.log('Transaction ERROR: ' + error.message);
+                });
+            });
+        })
+
+        function openModal(){
+            $('#exampleModal').modal('show');
+        }
+
+        function hideModal(){
+            $('#exampleModal').modal('hide');
+        }
+
+        function populateModal(dados){
+            Object.keys(dados).forEach(key => $(`#${key}`).val(dados[key]));
+            openModal();
+        }
+
+        function getAllClientes(){
+            return new Promise( (resolve, reject) => {
+                db.transaction(function(tx){  
+                    tx.executeSql('Select * from Empresas',[], function(tr, rs){ 
+                        resolve(rs.rows);
+                    });
+                })
+            });
+        }
+
+        async function insertRow(data){
+            $('#collection-clientes').append(`<li data-cnpj="${data.cnpj}" class="list-group-item" >${data.nome}</li>`)
+        }
+
+        async function insertRows(){
+            $('#collection-clientes').html("");
+            let clientes = await getAllClientes();
+            console.log(clientes);
+            [...clientes].forEach(insertRow);
+        }
+
+    </script>
+</body>
+
 </html>
