@@ -7,7 +7,7 @@
     <meta name="viewport"
         content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
     <link rel="stylesheet" type="text/css" href="css/index.css">
-    <title>App dos Clientes</title>
+    <title>App da Empresa</title>
 
     <script src="./js/jquery.js"></script>
     <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
@@ -41,7 +41,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Dados de Cliente</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">Dados de Empresa</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -57,8 +57,8 @@
                             <input type="text" class="form-control" id="cnpj" />
                         </div>
                         <div class="form-group">
-                            <label for="endereco" class="col-form-label">endereco</label>
-                            <input type="number" class="form-control" id="endereco" />
+                            <label for="qtdEmpregados" class="col-form-label">Quantidade de Empregados</label>
+                            <input type="number" class="form-control" id="qtdEmpregados" />
                         </div>
                         <div class="form-group">
                             <label for="email" class="col-form-label">E-mail</label>
@@ -83,7 +83,7 @@
             else db = window.sqlitePlugin.openDatabase({name: 'MyDatabase.db', location: 'default'});
             console.log(db);
             db.transaction(function (tx) {
-                tx.executeSql('CREATE TABLE IF NOT EXISTS Empresas (nome, cnpj, endereco, email)');
+                tx.executeSql('CREATE TABLE IF NOT EXISTS Empresas (nome, cnpj, qtdEmpregados, email)');
             }, function (error) {
                 console.log('Transaction ERROR: ' + error.message);
             }, async function () {
@@ -109,7 +109,7 @@
             $('#btn-add').on('click', function(){
                 selectedClientecnpj = undefined;
                 $('#nome').val("");
-                $('#endereco').val("");
+                $('#qtdEmpregados').val("");
                 $('#email').val("");
                 $('#cnpj').val("");
                 $('#btn-excluir').hide();
@@ -135,15 +135,15 @@
 
                     let data = {
                         nome: $('#nome').val(),
-                        endereco: $('#endereco').val(),
+                        qtdEmpregados: $('#qtdEmpregados').val(),
                         email: $('#email').val(),
                         cnpj: $('#cnpj').val()
                     }
 
                     if(selectedClientecnpj){
-                        sql = `UPDATE Empresas SET nome='${data.nome}', cnpj='${data.cnpj}', email='${data.email}', endereco=${data.endereco} WHERE cnpj = '${selectedClientecnpj}'`;
+                        sql = `UPDATE Empresas SET nome='${data.nome}', cnpj='${data.cnpj}', email='${data.email}', qtdEmpregados=${data.qtdEmpregados} WHERE cnpj = '${selectedClientecnpj}'`;
                     } else {
-                        sql = `INSERT INTO Empresas(nome, cnpj, email, endereco) VALUES ('${data.nome}', '${data.cnpj}', '${data.email}', ${data.endereco})`;
+                        sql = `INSERT INTO Empresas(nome, cnpj, email, qtdEmpregados) VALUES ('${data.nome}', '${data.cnpj}', '${data.email}', ${data.qtdEmpregados})`;
                     }
 
                     console.log(sql);
@@ -190,7 +190,9 @@
             $('#collection-clientes').html("");
             let clientes = await getAllClientes();
             console.log(clientes);
-            [...clientes].forEach(insertRow);
+            for(let i=0; i < clientes.length; i++){
+                insertRow(clientes.item(i));
+            }
         }
 
     </script>
