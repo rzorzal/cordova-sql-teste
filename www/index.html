@@ -31,6 +31,9 @@
                     <button id="btn-add" style="margin-top: 10px;" class="btn btn-primary btn-block">
                         Adicionar
                     </button>
+                    <button id="btn-limpar" style="margin-top: 10px;" class="btn btn-primary btn-block">
+                        Limpar Base
+                    </button>
                 </div>
             </div>
         </div>
@@ -79,8 +82,8 @@
         let db;
         let selectedClientecnpj;
         document.addEventListener('deviceready', function () {
-            if (window.cordova.platformId === 'browser') db = window.openDatabase('MyDatabase', '1.0', 'Data', 2*1024*1024);
-            else db = window.sqlitePlugin.openDatabase({name: 'MyDatabase.db', location: 'default'});
+            if (window.cordova.platformId === 'browser') db = window.openDatabase('MyDatabase', '1.0', 'Data', 2 * 1024 * 1024);
+            else db = window.sqlitePlugin.openDatabase({ name: 'MyDatabase.db', location: 'default' });
             console.log(db);
             db.transaction(function (tx) {
                 tx.executeSql('CREATE TABLE IF NOT EXISTS Empresas (nome, cnpj, qtdEmpregados, email)');
@@ -92,11 +95,11 @@
             });
         }, false);
 
-        $(document).ready(function(){
-            $('#collection-clientes').on('click', 'li', function(){
+        $(document).ready(function () {
+            $('#collection-clientes').on('click', 'li', function () {
                 selectedClientecnpj = $(this).attr('data-cnpj');
                 db.transaction(function (tx) {
-                    tx.executeSql(`SELECT * FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function(ts, rs){
+                    tx.executeSql(`SELECT * FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function (ts, rs) {
                         const element = rs.rows.item(0);
                         $('#btn-excluir').show();
                         populateModal(element);
@@ -106,7 +109,7 @@
                 });
             });
 
-            $('#btn-add').on('click', function(){
+            $('#btn-add').on('click', function () {
                 selectedClientecnpj = undefined;
                 $('#nome').val("");
                 $('#qtdEmpregados').val("");
@@ -116,9 +119,19 @@
                 openModal();
             });
 
-            $('#btn-excluir').on('click', function(){
+            $('#btn-limpar').on('click', function () {
                 db.transaction(function (tx) {
-                    tx.executeSql(`DELETE FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function(ts, rs){
+                    tx.executeSql('DROP TABLE IF EXISTS Empresas');
+                }, function (error) {
+                    console.log('Transaction ERROR: ' + error.message);
+                }, function (error) {
+                    window.location.reload();
+                });
+            });
+
+            $('#btn-excluir').on('click', function () {
+                db.transaction(function (tx) {
+                    tx.executeSql(`DELETE FROM Empresas WHERE cnpj = '${selectedClientecnpj}'`, [], function (ts, rs) {
                         hideModal();
                         selectedClientecnpj = undefined;
                         insertRows();
@@ -128,7 +141,7 @@
                 });
             });
 
-            $("#btn-salvar").on('click', function(){
+            $("#btn-salvar").on('click', function () {
                 db.transaction(function (tx) {
 
                     let sql;
@@ -140,7 +153,7 @@
                         cnpj: $('#cnpj').val()
                     }
 
-                    if(selectedClientecnpj){
+                    if (selectedClientecnpj) {
                         sql = `UPDATE Empresas SET nome='${data.nome}', cnpj='${data.cnpj}', email='${data.email}', qtdEmpregados=${data.qtdEmpregados} WHERE cnpj = '${selectedClientecnpj}'`;
                     } else {
                         sql = `INSERT INTO Empresas(nome, cnpj, email, qtdEmpregados) VALUES ('${data.nome}', '${data.cnpj}', '${data.email}', ${data.qtdEmpregados})`;
@@ -148,7 +161,7 @@
 
                     console.log(sql);
 
-                    tx.executeSql(sql, [], function(ts, rs){
+                    tx.executeSql(sql, [], function (ts, rs) {
                         hideModal();
                         selectedClientecnpj = undefined;
                         insertRows();
@@ -159,38 +172,38 @@
             });
         })
 
-        function openModal(){
+        function openModal() {
             $('#exampleModal').modal('show');
         }
 
-        function hideModal(){
+        function hideModal() {
             $('#exampleModal').modal('hide');
         }
 
-        function populateModal(dados){
+        function populateModal(dados) {
             Object.keys(dados).forEach(key => $(`#${key}`).val(dados[key]));
             openModal();
         }
 
-        function getAllClientes(){
-            return new Promise( (resolve, reject) => {
-                db.transaction(function(tx){  
-                    tx.executeSql('Select * from Empresas',[], function(tr, rs){ 
+        function getAllClientes() {
+            return new Promise((resolve, reject) => {
+                db.transaction(function (tx) {
+                    tx.executeSql('Select * from Empresas', [], function (tr, rs) {
                         resolve(rs.rows);
                     });
                 })
             });
         }
 
-        async function insertRow(data){
+        async function insertRow(data) {
             $('#collection-clientes').append(`<li data-cnpj="${data.cnpj}" class="list-group-item" >${data.nome}</li>`)
         }
 
-        async function insertRows(){
+        async function insertRows() {
             $('#collection-clientes').html("");
             let clientes = await getAllClientes();
             console.log(clientes);
-            for(let i=0; i < clientes.length; i++){
+            for (let i = 0; i < clientes.length; i++) {
                 insertRow(clientes.item(i));
             }
         }
