@@ -13,7 +13,7 @@ module.exports.metadata =
 // TOP OF METADATA
 {
     "cordova-plugin-whitelist": "1.3.3",
-    "cordova-sqlite-storage": "3.2.0"
+    "cordova-sqlite-storage": "0.7.14"
 }
 // BOTTOM OF METADATA
 });
